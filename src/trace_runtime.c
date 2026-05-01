@@ -1,5 +1,5 @@
 #include "trace_runtime.h"
-
+#include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
@@ -52,8 +52,34 @@ static pid_t launch_tracee(char *const argv[])
      *
      * Em erro, imprima uma mensagem com perror() e retorne -1.
      */
-    fprintf(stderr, "erro: TODO Semana 2: implementar launch_tracee()\n");
-    return -1;
+     pid_t pid = fork();
+
+    if (pid < 0) {
+        perror("fork");
+        return -1;
+    }
+
+    if (pid == 0) {
+        // processo filho
+
+        if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) < 0) {
+            perror("ptrace TRACEME");
+            exit(1);
+        }
+
+        raise(SIGSTOP);
+
+        execvp(argv[0], argv);
+
+        // só chega aqui se execvp falhar
+        perror("execvp");
+        exit(1);
+    }
+
+
+   // fprintf(stderr, "erro: TODO Semana 2: implementar launch_tracee()\n");
+   //processo pai
+    return pid;
 }
 
 static int wait_for_initial_stop(pid_t child)

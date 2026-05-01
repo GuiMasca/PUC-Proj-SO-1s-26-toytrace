@@ -1,0 +1,12 @@
+user.name=Guilherme Mascaretti
+user.email=guimascaretti@gmail.com
+core.repositoryformatversion=0
+core.filemode=true
+core.bare=false
+core.logallrefupdates=true
+remote.origin.url=https://github.com/GuiMasca/Puc-Proj-SO-1s-26-toytrace.git
+remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+branch.main.remote=origin
+branch.main.merge=refs/heads/main
+branch.main.vscode-merge-base=origin/main
+branch.Guilherme.vscode-merge-base=origin/main
