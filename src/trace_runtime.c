@@ -84,7 +84,7 @@ static pid_t launch_tracee(char *const argv[])
 
 static int wait_for_initial_stop(pid_t child)
 {
-    /*
+  /*
      * TODO Semana 2:
      *
      * O filho chama raise(SIGSTOP) antes de executar o programa alvo.
@@ -92,8 +92,22 @@ static int wait_for_initial_stop(pid_t child)
      *
      * Retorne 0 se o filho parou como esperado, -1 em erro.
      */
-    fprintf(stderr, "erro: TODO Semana 2: implementar wait_for_initial_stop()\n");
-    return -1;
+    //nossa solução: (Atualizado(Marcelo 07/05) - finalizar os pedidos da semana 2 ))
+    if(pid == 0){
+        raise(SIGSTOP);
+    }else if(pid>0){
+        waitpid(pid, &status, 0);
+
+        if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP) { // veriificação se está parado e se foi parado pelo SIGSTOP
+            return 0; // OK: filho parou como esperado
+        } else {
+            fprintf(stderr, "Filho não parou\n");
+            return -1;
+        }
+    }else{
+        perror("fork");
+        return -1;
+    }   
 }
 
 static int configure_trace_options(pid_t child)
