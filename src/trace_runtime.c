@@ -1,5 +1,5 @@
 #include "trace_runtime.h"
-#include <stdlib.h>
+
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
@@ -52,7 +52,8 @@ static pid_t launch_tracee(char *const argv[])
      *
      * Em erro, imprima uma mensagem com perror() e retorne -1.
      */
-     pid_t pid = fork();
+    //nossa solução:(Guilherme)
+    pid_t pid = fork();
 
     if (pid < 0) {
         perror("fork");
@@ -84,7 +85,7 @@ static pid_t launch_tracee(char *const argv[])
 
 static int wait_for_initial_stop(pid_t child)
 {
-  /*
+    /*
      * TODO Semana 2:
      *
      * O filho chama raise(SIGSTOP) antes de executar o programa alvo.
@@ -96,7 +97,7 @@ static int wait_for_initial_stop(pid_t child)
     if(pid == 0){
         raise(SIGSTOP);
     }else if(pid>0){
-        waitpid(pid, &status, 0);
+        waitpid(pid, status, 0);
 
         if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP) { // veriificação se está parado e se foi parado pelo SIGSTOP
             return 0; // OK: filho parou como esperado
@@ -118,8 +119,13 @@ static int configure_trace_options(pid_t child)
      * Configure PTRACE_O_TRACESYSGOOD com PTRACE_SETOPTIONS.
      * Isso ajuda a diferenciar paradas de syscall de outros sinais.
      */
-    fprintf(stderr, "erro: TODO Semana 3: implementar configure_trace_options()\n");
-    return -1;
+    //nossa solução
+    //usamos o ptrace(que dentro do if já 'roda' o comando) para diferenciar as syscall
+    if(ptrace(PTRACE_SETOPTIONS,child, 0,PTRACE_O_TRACESYSGOOD) == -1){ // senão for por syscall ele retorna -1
+        perror("ptrace -- SETOPTIONS / TRACESYSGOOD");
+        return -1;
+    }
+
 }
 
 static int resume_until_next_syscall(pid_t child, int signal_to_deliver)
@@ -132,8 +138,12 @@ static int resume_until_next_syscall(pid_t child, int signal_to_deliver)
      *
      * signal_to_deliver deve ser repassado como quarto argumento do ptrace.
      */
-    fprintf(stderr, "erro: TODO Semana 3: implementar resume_until_next_syscall()\n");
-    return -1;
+    //Nossa solução
+    //usamos o ptrce para verificae e rodar ao mesmo tempo no if passando os argumentos para o ptrace (iguak ao configure_trace_options)
+    if(ptrace(PTRACE_SYSCALL,child, 0, signal_to_deliver) == -1)
+        perror("ptrace(PTRACE_SYSCALL)");
+        return -1;
+    }
 }
 
 static int wait_for_syscall_stop(pid_t child, int *status)
@@ -154,8 +164,28 @@ static int wait_for_syscall_stop(pid_t child, int *status)
      * - com PTRACE_O_TRACESYSGOOD, syscall-stops aparecem com bit 0x80.
      * - paradas SIGTRAP comuns nao devem ser entregues de volta ao filho.
      */
-    fprintf(stderr, "erro: TODO Semana 3: implementar wait_for_syscall_stop()\n");
-    return -1;
+    //Nossa solução:
+    while(1){
+     if(waitpid(child, status,0)== -1){ //validação
+            return -1;
+        }
+        //retorno 0, caso normal
+        if(WIFEXITED(status) || WIFSIGNALED(status)){
+            return 0;
+        }
+        //Parado do filho
+        if(WIFSTOPPED(status)){
+            if(WSTOPSIG(status) == (SIGTRAP|0x80)){
+                printf("Filho parou por SYSCALL"
+                return 1; //Parado por siscal
+            }
+            //Se ele não parou, ele vai executar a função resume_until_next_syscall com seus parametros
+            resume_until_next_syscall(child,0);
+
+             //filho não deve recebrer SIGTRAP comum
+            //Podemos usar também a função resume_until_nextsyscall;
+        }
+    }
 }
 
 int trace_program(char *const argv[],
