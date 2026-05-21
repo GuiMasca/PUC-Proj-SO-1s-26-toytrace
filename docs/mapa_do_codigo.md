@@ -59,3 +59,6 @@ Ao executar o programa inicialmente, o primeiro erro encontrado foi:
 
 A principio o grupo inicialmente teve dúvidas em relação a organização em si do projeto e como entender e prosseguir em relação a primeira etapa.
 (Atualização 07/05 - Após uma análise mais profunda do projeto, houve dúvudas sobre algumas divergências entre o pdf guia e os comentários no esqueleto do código
+
+## 8.main_branch
+A main_brnach é onde postaremos os resultados finais de nossas atualizações depois de dermos comit nas branchs pessoasis de cada membro e todos derem o aval para comitar.
