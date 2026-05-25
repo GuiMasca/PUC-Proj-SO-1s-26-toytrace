@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
+#include<stdlib.h>
 #include <string.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
@@ -32,6 +33,17 @@ static void fill_event_from_regs(pid_t pid,
     memset(ev, 0, sizeof(*ev));
     ev->pid = pid;
     ev->entering = entering;
+
+    ev->syscall_no = regs->orig_rax;
+    ev->ret = regs->rax;
+
+    ev->args[0] = regs->rdi;
+    ev->args[1] = regs->rsi;
+    ev->args[2] = regs->rdx;
+    ev->args[3] = regs->r10;
+    ev->args[4] = regs->r8;
+    ev->args[5] = regs->r9;
+
 }
 
 static pid_t launch_tracee(char *const argv[])
@@ -94,21 +106,21 @@ static int wait_for_initial_stop(pid_t child)
      * Retorne 0 se o filho parou como esperado, -1 em erro.
      */
     //nossa solução: (Atualizado(Marcelo 07/05) - finalizar os pedidos da semana 2 ))
-    if(pid == 0){
-        raise(SIGSTOP);
-    }else if(pid>0){
-        waitpid(pid, status, 0);
+{
+    int status;
 
-        if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP) { // veriificação se está parado e se foi parado pelo SIGSTOP
-            return 0; // retorno ok, filho parou como esperado
-        } else {
-            fprintf(stderr, "Filho não parou\n");
-            return -1;
-        }
-    }else{
-        perror("fork");
+    if (waitpid(child, &status, 0) < 0) {
+        perror("waitpid");
         return -1;
-    }   
+    }
+
+    if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP) {
+        return 0;
+    }
+
+    fprintf(stderr, "Filho nao parou corretamente\n");
+    return -1;
+}
 }
 
 static int configure_trace_options(pid_t child)
