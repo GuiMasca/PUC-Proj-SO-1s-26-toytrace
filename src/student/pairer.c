@@ -5,7 +5,7 @@ int student_pair_syscall(struct syscall_pairer *pairer,
                          struct syscall_event *out)
 {
     /*
-     * TODO Semana 2:
+     * TODO Semana 5: (Atualizando para combinar com o pdf guia - 07/05)
      *
      * O runtime chama esta funcao duas vezes para cada syscall:
      *
@@ -28,5 +28,25 @@ int student_pair_syscall(struct syscall_pairer *pairer,
      *   0 se ainda nao ha syscall completa
      *  -1 se a sequencia de eventos parece invalida
      */
-    return 0;
+    
+
+    if (ev->entering) {
+        pairer->entry = *ev;
+        pairer->has_entry = 1;
+        return 0;
+    }
+
+    if (!pairer->has_entry) {
+        return -1;
+    }
+
+    *out = pairer->entry;
+
+    out->ret = ev->ret;
+    out->entering = 0;
+
+    pairer->has_entry = 0;
+
+    return 1;
 }
+

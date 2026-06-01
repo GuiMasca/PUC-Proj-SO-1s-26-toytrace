@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
@@ -32,6 +33,17 @@ static void fill_event_from_regs(pid_t pid,
     memset(ev, 0, sizeof(*ev));
     ev->pid = pid;
     ev->entering = entering;
+
+    ev->syscall_no = regs->orig_rax;
+    ev->ret = regs->rax;
+
+    ev->args[0] = regs->rdi;
+    ev->args[1] = regs->rsi;
+    ev->args[2] = regs->rdx;
+    ev->args[3] = regs->r10;
+    ev->args[4] = regs->r8;
+    ev->args[5] = regs->r9;
+
 }
 
 static pid_t launch_tracee(char *const argv[])
@@ -94,6 +106,7 @@ static int wait_for_initial_stop(pid_t child)
      * Retorne 0 se o filho parou como esperado, -1 em erro.
      */
     //nossa solução: (Atualizado(Marcelo 07/05) - finalizar os pedidos da semana 2 ))
+<<<<<<< HEAD
     if(pid == 0){
         raise(SIGSTOP);
     }else if(pid>0){
@@ -109,6 +122,23 @@ static int wait_for_initial_stop(pid_t child)
         perror("fork");
         return -1;
     }   
+=======
+{
+    int status;
+
+    if (waitpid(child, &status, 0) < 0) {
+        perror("waitpid");
+        return -1;
+    }
+
+    if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP) {
+        return 0;
+    }
+
+    fprintf(stderr, "Filho nao parou corretamente\n");
+    return -1;
+>>>>>>> Guilherme
+}
 }
 
 static int configure_trace_options(pid_t child)
@@ -119,13 +149,21 @@ static int configure_trace_options(pid_t child)
      * Configure PTRACE_O_TRACESYSGOOD com PTRACE_SETOPTIONS.
      * Isso ajuda a diferenciar paradas de syscall de outros sinais.
      */
+<<<<<<< HEAD
     //nossa solução
+=======
+    //nossa solução (Atualizado - User: Marcelo Chaddad - dia: 21/05)
+>>>>>>> Guilherme
     //usamos o ptrace(que dentro do if já 'roda' o comando) para diferenciar as syscall
     if(ptrace(PTRACE_SETOPTIONS,child, 0,PTRACE_O_TRACESYSGOOD) == -1){ // senão for por syscall ele retorna -1
         perror("ptrace -- SETOPTIONS / TRACESYSGOOD");
         return -1;
     }
+<<<<<<< HEAD
 
+=======
+    return 0; //Como passou retornar -1, passamos 0 para passar verdadeiro
+>>>>>>> Guilherme
 }
 
 static int resume_until_next_syscall(pid_t child, int signal_to_deliver)
@@ -138,12 +176,22 @@ static int resume_until_next_syscall(pid_t child, int signal_to_deliver)
      *
      * signal_to_deliver deve ser repassado como quarto argumento do ptrace.
      */
+<<<<<<< HEAD
     //Nossa solução
     //usamos o ptrce para verificae e rodar ao mesmo tempo no if passando os argumentos para o ptrace (iguak ao configure_trace_options)
     if(ptrace(PTRACE_SYSCALL,child, 0, signal_to_deliver) == -1)
         perror("ptrace(PTRACE_SYSCALL)");
         return -1;
     }
+=======
+    //Nossa solução (Atualizado - User: Marcelo Chaddad - dia: 21/05)
+    //usamos o PTRACE_SYSCALL para que o filho continuasse seu caminho com até a parada pela proxima syscall, com a habilidade de mandar sinais pelo caminho
+    if(ptrace(PTRACE_SYSCALL,child, 0, signal_to_deliver) == -1){
+        perror("ptrace(PTRACE_SYSCALL) | sign_to_deliver");
+        return -1;
+    }
+    return 0;
+>>>>>>> Guilherme
 }
 
 static int wait_for_syscall_stop(pid_t child, int *status)
@@ -164,12 +212,19 @@ static int wait_for_syscall_stop(pid_t child, int *status)
      * - com PTRACE_O_TRACESYSGOOD, syscall-stops aparecem com bit 0x80.
      * - paradas SIGTRAP comuns nao devem ser entregues de volta ao filho.
      */
+<<<<<<< HEAD
     //Nossa solução:
     while(1){
+=======
+    //Nossa solução:(Atualizado - User: Marcelo Chaddad - dia: 21/05)
+    while(1){
+        //pro waitpid é o próprio ponteiro
+>>>>>>> Guilherme
      if(waitpid(child, status,0)== -1){ //validação
             return -1;
         }
         //retorno 0, caso normal
+<<<<<<< HEAD
         if(WIFEXITED(status) || WIFSIGNALED(status)){
             return 0;
         }
@@ -181,6 +236,23 @@ static int wait_for_syscall_stop(pid_t child, int *status)
             }
             //Se ele não parou, ele vai executar a função resume_until_next_syscall com seus parametros
             resume_until_next_syscall(child,0);
+=======
+        //deve passar dentro do que está no enderesso status, não no ponteiro
+        if(WIFEXITED(*status) || WIFSIGNALED(*status)){
+            return 0;
+        }
+        //Parado do filho
+        if(WIFSTOPPED(*status)){
+            if(WSTOPSIG(*status) == (SIGTRAP|0x80)){
+                //printf("Filho parou por SYSCALL");
+                return 1; //Parado por siscal
+            }
+            //Se ele não parou, ele vai executar a função resume_until_next_syscall com seus parametros
+            if (resume_until_next_syscall(child, 0) == -1) { //caso falhe também
+                return -1;
+            }
+            continue; //mandar continuar, é mais para ser lúdico
+>>>>>>> Guilherme
 
              //filho não deve recebrer SIGTRAP comum
             //Podemos usar também a função resume_until_nextsyscall;
@@ -244,6 +316,10 @@ int trace_program(char *const argv[],
          * Depois chame fill_event_from_regs() e observer().
          */
         memset(&regs, 0, sizeof(regs));
+        if (ptrace(PTRACE_GETREGS, child, NULL, &regs) == -1) {
+        perror("ptrace(PTRACE_GETREGS)");
+        return -1;
+}
         fill_event_from_regs(child, entering, &regs, &ev);
         if (observer != NULL) {
             observer(&ev, userdata);
