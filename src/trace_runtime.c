@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
-#include<stdlib.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
@@ -191,7 +191,7 @@ static int wait_for_syscall_stop(pid_t child, int *status)
         //Parado do filho
         if(WIFSTOPPED(*status)){
             if(WSTOPSIG(*status) == (SIGTRAP|0x80)){
-                printf("Filho parou por SYSCALL");
+                //printf("Filho parou por SYSCALL");
                 return 1; //Parado por siscal
             }
             //Se ele não parou, ele vai executar a função resume_until_next_syscall com seus parametros
@@ -262,6 +262,10 @@ int trace_program(char *const argv[],
          * Depois chame fill_event_from_regs() e observer().
          */
         memset(&regs, 0, sizeof(regs));
+        if (ptrace(PTRACE_GETREGS, child, NULL, &regs) == -1) {
+        perror("ptrace(PTRACE_GETREGS)");
+        return -1;
+}
         fill_event_from_regs(child, entering, &regs, &ev);
         if (observer != NULL) {
             observer(&ev, userdata);
