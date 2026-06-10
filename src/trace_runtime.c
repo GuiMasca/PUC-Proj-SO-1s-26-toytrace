@@ -262,6 +262,7 @@ int trace_program(char *const argv[],
          * Depois chame fill_event_from_regs() e observer().
          */
         memset(&regs, 0, sizeof(regs));
+        /*Obtem o estado  atual dos registradores do processo para capturar argumentos e o retorno da syscall*/
         if (ptrace(PTRACE_GETREGS, child, NULL, &regs) == -1) {
         perror("ptrace(PTRACE_GETREGS)");
         return -1;
@@ -277,4 +278,5 @@ int trace_program(char *const argv[],
             return -1;
         }
     }
+    
 }

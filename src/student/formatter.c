@@ -119,7 +119,7 @@ void student_format_event(const struct syscall_event *ev,
                  ev->ret);
         return;
     }
-    
+
     snprintf(buf, bufsz, "%s(%#lx, %#lx, %#lx, %#lx, %#lx, %#lx) = %ld",
              syscall_name(ev->syscall_no),
              ev->args[0],
@@ -129,4 +129,5 @@ void student_format_event(const struct syscall_event *ev,
              ev->args[4],
              ev->args[5],
              ev->ret);
+             /*Solução: formatação especial para syscalls específicas, que recebem tratamento especial, transformando em linhas de texto*/
 }

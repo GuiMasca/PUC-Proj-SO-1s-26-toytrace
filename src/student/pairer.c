@@ -48,5 +48,6 @@ int student_pair_syscall(struct syscall_pairer *pairer,
     pairer->has_entry = 0;
 
     return 1;
+    /*Solução: cada syscall gera um evento de entrada e saída. Armazenamos o conteúdo da entrada temporariamente, e quando o evento da saida chega, combinamos as duas partes para formar uma syscall comleta*/
 }
 
