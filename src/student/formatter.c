@@ -35,7 +35,7 @@ void student_debug_raw_event(const struct syscall_event *ev,
              syscall_name(ev->syscall_no),
              ev->entering ? "entrada" : "saida");
 }
-
+/*TODO deixado como esqueleto guia*/
 void student_format_event(const struct syscall_event *ev,
                           char *buf,
                           size_t bufsz)

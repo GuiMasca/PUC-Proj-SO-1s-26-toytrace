@@ -29,7 +29,7 @@ int student_pair_syscall(struct syscall_pairer *pairer,
      *  -1 se a sequencia de eventos parece invalida
      */
     
-
+/*TODO deixado como esqueleto guia*/
     if (ev->entering) {
         pairer->entry = *ev;
         pairer->has_entry = 1;

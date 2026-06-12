@@ -13,7 +13,7 @@
 #if !defined(__x86_64__)
 #error "Este runtime didatico suporta apenas Linux x86_64."
 #endif
-
+/*Deixamos todos os comentários de TODOs como esqueleto guia*/
 static void fill_event_from_regs(pid_t pid,
                                  int entering,
                                  const struct user_regs_struct *regs,
